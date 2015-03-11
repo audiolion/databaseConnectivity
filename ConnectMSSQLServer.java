@@ -1,5 +1,3 @@
-package dbconnect;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -36,9 +34,9 @@ public class ConnectMSSQLServer {
 	         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 	         conn = DriverManager.getConnection(dbConnectURL, username, password);
 	      }catch(ClassNotFoundException ex){
-	    	  ex.printStackTrace();
+	    	  new DLException(ex);
 	      }catch(SQLException e){
-	    	  e.printStackTrace();
+	    	  new DLException(e);
 	      }
 	      if(conn != null){
 	    	  return true;
@@ -56,7 +54,7 @@ public class ConnectMSSQLServer {
 			try {
 				conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				new DLException(e);
 			}
 		}
 		
@@ -95,7 +93,11 @@ public class ConnectMSSQLServer {
 				resultSet.add(list);
 			}
 		}catch (SQLException e){
-			e.printStackTrace();
+			if(resultSet.isEmpty()){
+				new DLException(e);
+			}else{
+				new DLException(e, resultSet);
+			}
 		}	
 		return resultSet;
 	}
@@ -117,7 +119,7 @@ public class ConnectMSSQLServer {
 			stmt = conn.createStatement();
 			result = stmt.execute(sql);
 		}catch(SQLException e){
-			e.printStackTrace();
+			new DLException(e);
 		}
 		
 		return result;
@@ -147,7 +149,6 @@ public class ConnectMSSQLServer {
     		}
     		System.out.println();
     	}
-    	
     	connServer.dbConnectClose();
     }
 }
