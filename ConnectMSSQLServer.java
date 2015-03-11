@@ -139,6 +139,15 @@ public class ConnectMSSQLServer {
     	}
     	ConnectMSSQLServer connServer = new ConnectMSSQLServer();
     	connServer.dbConnect(url, username, password);
+    	String sql = "SELECT * from Equipment";
+    	ArrayList<ArrayList<String>> data = connServer.getData(sql);
+    	for(ArrayList<String> array : data){
+    		for(String item : array){
+    			System.out.print("\t"+item);
+    		}
+    		System.out.println();
+    	}
+    	
     	connServer.dbConnectClose();
     }
 }
