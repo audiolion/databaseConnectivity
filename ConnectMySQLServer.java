@@ -22,17 +22,37 @@ public class ConnectMySQLServer {
 	
 	private static final String DEFAULT_URL = "jdbc:mysql://localhost/travel2";
 	private static final String DEFAULT_USER = "root";
-	private static final String DEFAULT_PASS = "student";
+	private static final String DEFAULT_PASS = "111883";
 	
+	/**
+	 * Ensures singleton access to database instance
+	 */
 	private static class SingletonWrapper{
 		private static ConnectMySQLServer INSTANCE = new ConnectMySQLServer();
 	}
 	
+	/**
+	 * Provides access to singleton instance of db class
+	 * @return ConnectMySQLServer.INSTANCE
+	 */
 	public static ConnectMySQLServer getInstance(){
 		return SingletonWrapper.INSTANCE;
 	}
 	
+	/**
+	 * Ensures there is no public default constructor
+	 */
 	private ConnectMySQLServer(){
+	}
+	
+	/**
+	 * Provides a default connection method for ConnectMySQLServer instance
+	 * @return boolean status of connection success
+	 */
+	public boolean defaultConnect(){
+		boolean result = getInstance().dbConnect(DEFAULT_USER, DEFAULT_USER,
+				DEFAULT_PASS);
+		return result;
 	}
 	
 	/**
@@ -45,10 +65,12 @@ public class ConnectMySQLServer {
 	 * @param password - password for login credentials
 	 * @return boolean - true if connection was successful, false if not
 	 */
-	public boolean dbConnect(String dbConnectURL, String username, String password){
+	public boolean dbConnect(String dbConnectURL, String username,
+			String password){
 	      try{
 	         Class.forName("com.mysql.jdbc.Driver");
-	         conn = DriverManager.getConnection(dbConnectURL, username, password);
+	         conn = DriverManager.getConnection(dbConnectURL, username, 
+	        		 password);
 	      }catch(ClassNotFoundException ex){
 	    	  ex.printStackTrace();
 	      }catch(SQLException e){
@@ -93,7 +115,8 @@ public class ConnectMySQLServer {
 		ResultSet rs = null;
 		ResultSetMetaData metaData = null;
 		int columnCount = 0;
-		ArrayList<ArrayList<String>> resultSet = new ArrayList<ArrayList<String>>();
+		ArrayList<ArrayList<String>> resultSet = 
+				new ArrayList<ArrayList<String>>();
 
 		try{
 			stmt = conn.createStatement();
@@ -102,7 +125,7 @@ public class ConnectMySQLServer {
 			columnCount = metaData.getColumnCount();
 			while(rs.next()){
 				ArrayList<String> list = new ArrayList<String>();
-				for(int i = 1; i < columnCount; i++){
+				for(int i = 1; i <= columnCount; i++){
 					String str = rs.getString(i);
 					list.add(str);
 				}
@@ -115,6 +138,7 @@ public class ConnectMySQLServer {
 				e.printStackTrace();
 			}
 		}	
+		this.printFormat(resultSet, metaData);
 		return resultSet;
 	}
 	
@@ -194,6 +218,33 @@ public class ConnectMySQLServer {
 	}
 	
 	/**
+	 * Provides a pretty printing to the console that is similar to the SQL
+	 * table layout
+	 * 
+	 * @param resultSet - the ArrayList<ArrayList<String>> of result set data
+	 * @param metaData - ResultSetMetaData to get field names
+	 */
+	public void printFormat(ArrayList<ArrayList<String>> resultSet, 
+			ResultSetMetaData metaData){
+		int columnCount = 0;
+		try {
+			columnCount = metaData.getColumnCount();
+			for(int i = 1; i <= columnCount; i++){
+				System.out.format("%-20s\t", metaData.getColumnName(i));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		for(ArrayList<String> array : resultSet){
+    		for(String item : array){
+    			 System.out.format("%-20s\t", item);
+    		}
+    		System.out.println();
+    	}
+	}
+	
+	/**
 	 * Sets up the default connection string to RIT's database. If args are
 	 * provided then it will use them instead.
 	 * @param args - command line arguments
@@ -208,21 +259,24 @@ public class ConnectMySQLServer {
     		password = args[2];
     	}
     	ConnectMySQLServer connServer = new ConnectMySQLServer();
-    	connServer.dbConnect(DEFAULT_URL, DEFAULT_USER, DEFAULT_PASS);
-    	String sql = "SELECT * from Equipment";
-    	ArrayList<ArrayList<String>> data = connServer.getData(sql);
-    	for(ArrayList<String> array : data){
-    		for(String item : array){
-    			System.out.print("\t"+item);
-    		}
-    		System.out.println();
+    	
+    	if(args.length == 0){
+    		connServer.dbConnect(DEFAULT_URL, DEFAULT_USER, DEFAULT_PASS);
+    	}else{
+    		connServer.dbConnect(url, username, password);
     	}
+    	
+    	String sql = "SELECT * from trip";
+    	ArrayList<ArrayList<String>> data = connServer.getData(sql);
+    	
     	ResultSetMetaData metaData = connServer.getMetaData(sql);
     	int columnCount;
 		try {
 			columnCount = metaData.getColumnCount();
+			System.out.println("\n" + columnCount + " Fields Retrieved");
+			System.out.format("%-12s\t%12s\n", "Field", "Type");
 			for(int i = 1; i <= columnCount; i++){
-	    		System.out.println(metaData.getColumnName(i));
+	    		System.out.format("%-20s\t%-15s\n", metaData.getColumnName(i), metaData.getColumnTypeName(i));
 	    	}
 		} catch (SQLException e) {
 			e.printStackTrace();
