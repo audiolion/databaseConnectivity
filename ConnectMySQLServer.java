@@ -1,3 +1,6 @@
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -5,6 +8,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Properties;
 
 /**
  * Class is set up to connect to a MySQL Server database and provides methods
@@ -20,9 +24,12 @@ public class ConnectMySQLServer {
 	//Connection attribute
 	private Connection conn = null;
 	
-	private static final String DEFAULT_URL = "jdbc:mysql://localhost/travel2";
-	private static final String DEFAULT_USER = "root";
-	private static final String DEFAULT_PASS = "111883";
+	Properties prop = new Properties();
+	String propFileName = "config.properties";
+	
+	private String propsURL = "";
+	private String propsUSER = "";
+	private String propsPASS = "";
 	
 	/**
 	 * Ensures singleton access to database instance
@@ -41,17 +48,38 @@ public class ConnectMySQLServer {
 	
 	/**
 	 * Ensures there is no public default constructor
+	 * @throws  
 	 */
 	private ConnectMySQLServer(){
+		InputStream inputStream = getClass().getClassLoader()
+				.getResourceAsStream(propFileName);
+		if(inputStream != null){
+			try {
+				prop.load(inputStream);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}else{
+			try {
+				throw new FileNotFoundException("property file '" + propFileName
+						+ "' not found in the classpath");
+			} catch(IOException e) {
+				e.printStackTrace();
+			}
+		}
+		propsURL = prop.getProperty("url");
+		propsUSER = prop.getProperty("user");
+		propsPASS = prop.getProperty("pass");
 	}
 	
 	/**
 	 * Provides a default connection method for ConnectMySQLServer instance
 	 * @return boolean status of connection success
+	 * @throws DLException 
 	 */
-	public boolean defaultConnect(){
-		boolean result = getInstance().dbConnect(DEFAULT_USER, DEFAULT_USER,
-				DEFAULT_PASS);
+	public boolean defaultConnect() throws DLException{
+		boolean result = getInstance().dbConnect(propsURL, propsUSER,
+				propsPASS);
 		return result;
 	}
 	
@@ -64,17 +92,16 @@ public class ConnectMySQLServer {
 	 * @param username - username for login credentials
 	 * @param password - password for login credentials
 	 * @return boolean - true if connection was successful, false if not
+	 * @throws DLException 
 	 */
 	public boolean dbConnect(String dbConnectURL, String username,
-			String password){
+			String password) throws DLException{
 	      try{
 	         Class.forName("com.mysql.jdbc.Driver");
 	         conn = DriverManager.getConnection(dbConnectURL, username, 
 	        		 password);
-	      }catch(ClassNotFoundException ex){
-	    	  ex.printStackTrace();
-	      }catch(SQLException e){
-	    	  e.printStackTrace();
+	      }catch(ClassNotFoundException | SQLException e){
+	    	  throw new DLException(e);
 	      }
 	      if(conn != null){
 	    	  return true;
@@ -86,13 +113,14 @@ public class ConnectMySQLServer {
 	/**
 	 * Closes the current database connection if it is open and sets the
 	 * attribute to null.
+	 * @throws DLException 
 	 */
-	public void dbConnectClose(){
+	public void dbConnectClose() throws DLException{
 		if(conn != null){
 			try {
 				conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				throw new DLException(e);
 			}
 		}
 		
@@ -105,8 +133,9 @@ public class ConnectMySQLServer {
 	 * 
 	 * @param sql - String representing a SQL Query
 	 * @return 2D ArrayList, if empty, connection did not exist, or no results
+	 * @throws DLException 
 	 */
-	public ArrayList<ArrayList<String>> getData(String sql){
+	public ArrayList<ArrayList<String>> getData(String sql) throws DLException{
 		if(conn == null){
 			return new ArrayList<ArrayList<String>>();
 		}
@@ -133,9 +162,9 @@ public class ConnectMySQLServer {
 			}
 		}catch (SQLException e){
 			if(resultSet.isEmpty()){
-				e.printStackTrace();
+				throw new DLException();
 			}else{
-				e.printStackTrace();
+				throw new DLException(e);
 			}
 		}	
 		this.printFormat(resultSet, metaData);
@@ -148,8 +177,9 @@ public class ConnectMySQLServer {
 	 * 
 	 * @param sql - SQL Query
 	 * @return rs - the result set from the query, null if no connection to db
+	 * @throws DLException 
 	 */
-	public ResultSet getResultSet(String sql){
+	public ResultSet getResultSet(String sql) throws DLException{
 		if(conn == null){
 			return null;
 		}
@@ -161,7 +191,7 @@ public class ConnectMySQLServer {
 			stmt = conn.createStatement();
 			rs = stmt.executeQuery(sql);
 		}catch(SQLException e){
-			e.printStackTrace();
+			throw new DLException(e);
 		}
 		
 		return rs;
@@ -173,8 +203,9 @@ public class ConnectMySQLServer {
 	 * 
 	 * @param sql - SQL Query
 	 * @return metaData - Meta data of the result set, null if no db connection
+	 * @throws DLException 
 	 */
-	public ResultSetMetaData getMetaData(String sql){
+	public ResultSetMetaData getMetaData(String sql) throws DLException{
 		if(conn == null){
 			return null;
 		}
@@ -188,7 +219,7 @@ public class ConnectMySQLServer {
 			rs = stmt.executeQuery(sql);
 			metaData = rs.getMetaData();
 		}catch(SQLException e){
-			e.printStackTrace();
+			throw new DLException(e);
 		}
 		
 		return metaData;		
@@ -199,8 +230,9 @@ public class ConnectMySQLServer {
 	 * 
 	 * @param sql - a String representing a SQL Query
 	 * @return - A boolean value, true indicates a result set was returned
+	 * @throws DLException 
 	 */
-	public boolean setData(String sql){
+	public boolean setData(String sql) throws DLException{
 		if(conn == null){
 			return false;
 		}
@@ -211,7 +243,7 @@ public class ConnectMySQLServer {
 			stmt = conn.createStatement();
 			result = stmt.execute(sql);
 		}catch(SQLException e){
-			e.printStackTrace();
+			throw new DLException(e);
 		}
 		
 		return result;
@@ -223,9 +255,10 @@ public class ConnectMySQLServer {
 	 * 
 	 * @param resultSet - the ArrayList<ArrayList<String>> of result set data
 	 * @param metaData - ResultSetMetaData to get field names
+	 * @throws DLException 
 	 */
 	public void printFormat(ArrayList<ArrayList<String>> resultSet, 
-			ResultSetMetaData metaData){
+			ResultSetMetaData metaData) throws DLException{
 		int columnCount = 0;
 		try {
 			columnCount = metaData.getColumnCount();
@@ -233,7 +266,7 @@ public class ConnectMySQLServer {
 				System.out.format("%-20s\t", metaData.getColumnName(i));
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			throw new DLException(e);
 		}
 		
 		for(ArrayList<String> array : resultSet){
@@ -243,45 +276,4 @@ public class ConnectMySQLServer {
     		System.out.println();
     	}
 	}
-	
-	/**
-	 * Sets up the default connection string to RIT's database. If args are
-	 * provided then it will use them instead.
-	 * @param args - command line arguments
-	 */
-    public static void main(String[] args){
-    	String url = "";
-    	String username = "";
-    	String password = "";
-    	if(args.length == 3){
-    		url = args[0];
-    		username = args[1];
-    		password = args[2];
-    	}
-    	ConnectMySQLServer connServer = new ConnectMySQLServer();
-    	
-    	if(args.length == 0){
-    		connServer.dbConnect(DEFAULT_URL, DEFAULT_USER, DEFAULT_PASS);
-    	}else{
-    		connServer.dbConnect(url, username, password);
-    	}
-    	
-    	String sql = "SELECT * from trip";
-    	ArrayList<ArrayList<String>> data = connServer.getData(sql);
-    	
-    	ResultSetMetaData metaData = connServer.getMetaData(sql);
-    	int columnCount;
-		try {
-			columnCount = metaData.getColumnCount();
-			System.out.println("\n" + columnCount + " Fields Retrieved");
-			System.out.format("%-12s\t%12s\n", "Field", "Type");
-			for(int i = 1; i <= columnCount; i++){
-	    		System.out.format("%-20s\t%-15s\n", metaData.getColumnName(i), metaData.getColumnTypeName(i));
-	    	}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-    	
-    	connServer.dbConnectClose();
-    }
 }

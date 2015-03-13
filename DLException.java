@@ -73,7 +73,7 @@ public class DLException extends Exception{
 			String timeStamp = new SimpleDateFormat("yyyyMMdd_HH:mm:ss").format(
 					Calendar.getInstance().getTime());
 			// create a log file to write to
-			File logFile = new File("errorlog.txt");
+			File logFile = new File("C:\\errorlog.txt");
 			
 			// due to varying implementations of new line and errors with
 			// BufferedWriter class we get the systems line separator value

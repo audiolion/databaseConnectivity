@@ -6,9 +6,6 @@ public class Equipment {
 	private String equipDesc = "";
 	private String equipCap = "";
 	private ConnectMySQLServer dbInstance;
-	private String[] colNames = {"EquipID", "EquipmentName",
-									"EquipmentDescription",	
-										"EquipmentCapacity"};
 	
 	public Equipment(){
 		dbInstance = ConnectMySQLServer.getInstance();
@@ -30,86 +27,150 @@ public class Equipment {
 	
 	public ArrayList<String> getEquipID(){
 		String sql = "SELECT equipment.equipid FROM equipment";
-		ArrayList<ArrayList<String>> result = dbInstance.getData(sql);
-		ArrayList<String> equipID = result.get(0);
+		ArrayList<ArrayList<String>> result;
+		ArrayList<String> equipID = new ArrayList<String>();
+		try {
+			result = dbInstance.getData(sql);
+			equipID = result.get(0);
+		} catch (DLException e) {
+		}
+		
 		return equipID;
 	}
 	
 	public ArrayList<String> getEquipmentName(){
 		String sql = "SELECT equipment.equipmentname FROM equipment";
-		ArrayList<ArrayList<String>> result = dbInstance.getData(sql);
-		ArrayList<String> equipmentName = result.get(0);
+		ArrayList<ArrayList<String>> result;
+		ArrayList<String> equipmentName = new ArrayList<String>();
+		try {
+			result = dbInstance.getData(sql);
+			equipmentName = result.get(0);
+		} catch (DLException e) {
+		}
+		
 		return equipmentName;
 	}
 	
 	public ArrayList<String> getEquipmentDescription(){
 		String sql = "SELECT equipment.equipmentdescription FROM equipment";
-		ArrayList<ArrayList<String>> result = dbInstance.getData(sql);
-		ArrayList<String> equipDesc = result.get(0);
+		ArrayList<ArrayList<String>> result;
+		ArrayList<String> equipDesc = new ArrayList<String>();
+		try {
+			result = dbInstance.getData(sql);
+			equipDesc = result.get(0);
+		} catch (DLException e) {
+		}
+		
 		return equipDesc;
 	}
 	
 	public ArrayList<String> getEquipmentCapacity(){
 		String sql = "SELECT equipment.equipmentcapacity FROM equipment";
-		ArrayList<ArrayList<String>> result = dbInstance.getData(sql);
-		ArrayList<String> equipCap = result.get(0);
+		ArrayList<ArrayList<String>> result;
+		ArrayList<String> equipCap = new ArrayList<String>();
+		try {
+			result = dbInstance.getData(sql);
+			equipCap = result.get(0);
+		} catch (DLException e) {
+		}
+		
 		return equipCap;
 	}
 	
 	public boolean addEquipID(String equipID){
 		String sql = "INSERT INTO equipment (equipid) values (" + equipID + ")";
-		boolean result = dbInstance.setData(sql);
+		boolean result = false;
+		try {
+			result = dbInstance.setData(sql);
+		} catch (DLException e) {
+		}
 		return result;
 	}
 	
 	public boolean addEquipmentName(String equipName){
 		String sql = "INSERT INTO equipment (equipmentname) values (" + equipName + ")";
-		boolean result = dbInstance.setData(sql);
+		boolean result = false;
+		try {
+			result = dbInstance.setData(sql);
+		} catch (DLException e) {
+		}
 		return result;
 	}
 	
 	public boolean addEquipmentDescription(String equipDesc){
 		String sql = "INSERT INTO equipment (equipmentdescription) values (" + equipDesc + ")";
-		boolean result = dbInstance.setData(sql);
+		boolean result = false;
+		try {
+			result = dbInstance.setData(sql);
+		} catch (DLException e) {
+		}
 		return result;
 	}
 	
 	public boolean addEquipmentCapacity(String equipCap){
 		String sql = "INSERT INTO equipment (equipmentcapacity) values (" + equipCap + ")";
-		boolean result = dbInstance.setData(sql);
+		boolean result = false;
+		try {
+			result = dbInstance.setData(sql);
+		} catch (DLException e) {
+		}
+		
 		return result;
 	}
 	
 	public ArrayList<String> fetch(){
 		String sql = "SELECT equipment.equipid FROM equipment WHERE equipid = '" + equipID + "'";
-		System.out.println(sql);
-		ArrayList<ArrayList<String>> results = dbInstance.getData(sql);
-		ArrayList<String> equipID = results.get(0);
+		ArrayList<ArrayList<String>> results;
+		ArrayList<String> equipID = new ArrayList<String>();
+		try {
+			results = dbInstance.getData(sql);
+			equipID = results.get(0);
+		} catch (DLException e) {
+		}
+		
 		return equipID;
 	}
 	
 	public boolean put(String toUpdate, String update){
 		String sql = "UPDATE equipment SET equipid = " + update +
 				" where equipid = " + toUpdate;
-		boolean result = dbInstance.setData(sql);
+		boolean result = false;
+		try {
+			result = dbInstance.setData(sql);
+		} catch (DLException e) {
+		}
+		
 		return result;
 	}
 	
 	public boolean post(String attribute, String post){
 		String sql = "INSERT INTO Equipment (" + attribute + ") values (" + post + ")";
-		boolean result = dbInstance.setData(sql);
+		boolean result = false;
+		try {
+			result = dbInstance.setData(sql);
+		} catch (DLException e) {
+		}
+		
 		return result;
 	}
 	
 	public boolean delete(String delete){
 		String sql = "DELETE FROM Equipment WHERE equipid = " + delete;
-		boolean result = dbInstance.setData(sql);
+		boolean result = false;
+		try {
+			result = dbInstance.setData(sql);
+		} catch (DLException e) {
+		}
 		return result;
 	}
 	
 	public static void main(String[] args){
 		Equipment eq = new Equipment("1112");
-		boolean result = eq.dbInstance.defaultConnect();
+		boolean result = false;
+		try {
+			result = eq.dbInstance.defaultConnect();
+		} catch (DLException e) {
+		}
 		System.out.println(result);
 		ArrayList<String> res = eq.fetch();
 		for(String line : res){
