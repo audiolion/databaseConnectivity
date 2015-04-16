@@ -3,11 +3,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.Properties;
 
 /**
@@ -30,6 +32,8 @@ public class ConnectMySQLServer {
 	private String propsURL = "";
 	private String propsUSER = "";
 	private String propsPASS = "";
+	
+	private Hashtable<String, PreparedStatement> preparedStatements;
 	
 	/**
 	 * Ensures singleton access to database instance
@@ -70,6 +74,8 @@ public class ConnectMySQLServer {
 		propsURL = prop.getProperty("url");
 		propsUSER = prop.getProperty("user");
 		propsPASS = prop.getProperty("pass");
+		
+		preparedStatements = new Hashtable<String, PreparedStatement>();
 	}
 	
 	/**
@@ -170,6 +176,118 @@ public class ConnectMySQLServer {
 		this.printFormat(resultSet, metaData);
 		return resultSet;
 	}
+	
+	/**
+	 * Uses the prepare method and executes the query, printing the result set and
+	 * returning the result set as a 2-D ArrayList.
+	 * 
+	 * @param sql - the sql string to prepare
+	 * @param parameters - the parameters to prepare it with
+	 * @return resultSet - a 2-d table representation of the results
+	 */
+	public ArrayList<ArrayList<String>> getData(String sql, ArrayList<String> parameters){
+		if(conn == null){
+			return new ArrayList<ArrayList<String>>();
+		}
+		
+		ResultSet rs = null;
+		ResultSetMetaData metaData = null;
+		int columnCount = 0;
+		ArrayList<ArrayList<String>> resultSet = 
+				new ArrayList<ArrayList<String>>();
+		try{
+			PreparedStatement stmt = prepare(sql, parameters);
+			rs = stmt.executeQuery();
+			metaData = rs.getMetaData();
+			columnCount = metaData.getColumnCount();
+			while(rs.next()){
+				ArrayList<String> list = new ArrayList<String>();
+				for(int i = 1; i <= columnCount; i++){
+					String str = rs.getString(i);
+					list.add(str);
+				}
+				resultSet.add(list);
+			}
+			this.printFormat(resultSet, metaData);
+		}catch (DLException | SQLException e) {
+			
+		}
+		
+		return resultSet;		
+	}
+	
+	/**
+	 * Wrapper for the execute and prepare methods. Method calls prepare to make a prepared
+	 * statement and execute to execute the statement, return the result of the attempt.
+	 * 
+	 * @param sql - the sql query to prepare
+	 * @param parameters - the parameters to prepare it with
+	 * @return boolean - the result of the query execution
+	 */
+	public boolean setData(String sql, ArrayList<String> parameters){
+		if(conn == null){
+			return false;
+		}
+		
+		boolean result = false;
+		try{
+			PreparedStatement stmt = prepare(sql, parameters);
+			result = stmt.execute();
+		}catch(SQLException | DLException e){
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Makes a PreparedStatement object if one does not already exist for the given Sql string.
+	 * If the string already exists then it pulls it from this classes hashtable of prepared
+	 * statements. Then the provided parameters are assigned to the PreparedStatement and the
+	 * object is returned as well as being stored in this classes hashtable.
+	 * 
+	 * @param sql - the sql query to prepare
+	 * @param parameters - the parameters to provide to the sql query
+	 * @return stmt - the prepared statement object
+	 * @throws DLException
+	 */
+	public PreparedStatement prepare(String sql, ArrayList<String> parameters) throws DLException{
+		PreparedStatement stmt = preparedStatements.get(sql);
+		Boolean stmtExists = false;
+		if(stmt != null){
+			stmtExists = true;
+		}
+		try {
+			if(!stmtExists){
+				stmt = conn.prepareStatement(sql);
+			}
+			for(int i = 0; i < parameters.size(); i++){
+				stmt.setString((i+1), parameters.get(i));
+			}
+			preparedStatements.put(sql, stmt);
+		} catch (SQLException e) {
+			throw new DLException(e);
+		}
+		
+		return stmt;
+	}
+	
+	/**
+	 * Wrapper for executeUpdate and prepareStatement methods
+	 * 
+	 * @param sql - the sql string to be prepared
+	 * @param parameters - the parameters to insert
+	 * @return result - the integer return from executeUpdate
+	 */
+	public int executeStmt(String sql, ArrayList<String> parameters){
+		int result = -1;
+		try{
+			PreparedStatement stmt = prepare(sql, parameters);
+			result = stmt.executeUpdate();
+		}catch(DLException | SQLException e){
+		}
+		return result;
+	}
+	
 	
 	/**
 	 * Grabs the raw result set from a SQL query. Methods using this method
