@@ -1,3 +1,6 @@
+package dbconnect;
+
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 
 public class Equipment {
@@ -119,66 +122,66 @@ public class Equipment {
 	}
 	
 	public ArrayList<String> fetch(){
-		String sql = "SELECT equipment.equipid FROM equipment WHERE equipid = '" + equipID + "'";
+		String sql = "SELECT * FROM equipment WHERE equipid = ?";
+		ArrayList<String> parameters = new ArrayList<String>();
+		parameters.add(equipID);
 		ArrayList<ArrayList<String>> results;
 		ArrayList<String> equipID = new ArrayList<String>();
-		try {
-			results = dbInstance.getData(sql);
-			equipID = results.get(0);
-		} catch (DLException e) {
-		}
+		results = dbInstance.getData(sql, parameters);
+		equipID = results.get(0);
 		
 		return equipID;
 	}
 	
-	public boolean put(String toUpdate, String update){
-		String sql = "UPDATE equipment SET equipid = " + update +
-				" where equipid = " + toUpdate;
+	public boolean put(String update, String fieldMatch){
+		String sql = "UPDATE equipment SET EquipmentName = ? where equipID = ?";
+		ArrayList<String> parameters = new ArrayList<String>();
+		parameters.add(update);
+		parameters.add(fieldMatch);
 		boolean result = false;
-		try {
-			result = dbInstance.setData(sql);
-		} catch (DLException e) {
-		}
+		result = dbInstance.setData(sql, parameters);
 		
 		return result;
 	}
 	
 	public boolean post(String attribute, String post){
-		String sql = "INSERT INTO Equipment (" + attribute + ") values (" + post + ")";
+		String sql = "INSERT INTO Equipment (?) VALUES (?)";
+		ArrayList<String> parameters = new ArrayList<String>();
+		parameters.add(attribute);
+		parameters.add(post);
 		boolean result = false;
-		try {
-			result = dbInstance.setData(sql);
-		} catch (DLException e) {
-		}
+		result = dbInstance.setData(sql, parameters);
 		
 		return result;
 	}
 	
 	public boolean delete(String delete){
-		String sql = "DELETE FROM Equipment WHERE equipid = " + delete;
+		String sql = "DELETE FROM Equipment WHERE equipid = ?";
+		ArrayList<String> parameters = new ArrayList<String>();
+		parameters.add(delete);
 		boolean result = false;
-		try {
-			result = dbInstance.setData(sql);
-		} catch (DLException e) {
-		}
+		result = dbInstance.setData(sql, parameters);
 		return result;
 	}
 	
 	public static void main(String[] args){
-		Equipment eq = new Equipment("1112");
+		Equipment eq = new Equipment("568");
 		boolean result = false;
 		try {
 			result = eq.dbInstance.defaultConnect();
 		} catch (DLException e) {
 		}
-		System.out.println(result);
-		ArrayList<String> res = eq.fetch();
-		for(String line : res){
-			System.out.println(line);
+		if(result){
+			ArrayList<String> res = eq.fetch();
+			for(String line : res){
+				System.out.print(line+"\t");
+			}
+			eq.put("Clearly Class", "568");
+			res = eq.fetch();
+			System.out.print("\n");
+			for(String line : res){
+				System.out.print(line+"\t");
+			}
 		}
-		eq.put("1112", "1113");
-		eq.post("equipid", "4570");
-		eq.post("equipid", "2130");
-		eq.delete("2130");		
 	}
 }

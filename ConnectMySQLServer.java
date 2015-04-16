@@ -1,3 +1,5 @@
+package dbconnect;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -73,7 +75,7 @@ public class ConnectMySQLServer {
 		}
 		propsURL = prop.getProperty("url");
 		propsUSER = prop.getProperty("user");
-		propsPASS = prop.getProperty("pass");
+		propsPASS = prop.getProperty("password");
 		
 		preparedStatements = new Hashtable<String, PreparedStatement>();
 	}
@@ -178,6 +180,58 @@ public class ConnectMySQLServer {
 	}
 	
 	/**
+	 * Method executes a SQL Query if a database connection exists and converts
+	 * the result set into a 2D ArrayList that is returned.
+	 * 
+	 * @param sql - String representing a SQL Query
+	 * @return 2D ArrayList, if empty, connection did not exist, or no results
+	 * @throws DLException 
+	 */
+	public ArrayList<ArrayList<String>> getData(String sql, Boolean value) throws DLException{
+		if(conn == null){
+			return new ArrayList<ArrayList<String>>();
+		}
+		
+		Statement stmt = null;
+		ResultSet rs = null;
+		ResultSetMetaData metaData = null;
+		int columnCount = 0;
+		ArrayList<ArrayList<String>> resultSet = 
+				new ArrayList<ArrayList<String>>();
+		
+		try{
+			stmt = conn.createStatement();
+			rs = stmt.executeQuery(sql);
+			metaData = rs.getMetaData();
+			columnCount = metaData.getColumnCount();
+			if(value){
+				ArrayList<String> colNames = new ArrayList<String>();
+				for(int i = 1; i <= columnCount; i++){
+					String str = metaData.getColumnName(i);
+					colNames.add(str);
+				}
+				resultSet.add(colNames);
+			}
+			while(rs.next()){
+				ArrayList<String> list = new ArrayList<String>();
+				for(int i = 1; i <= columnCount; i++){
+					String str = rs.getString(i);
+					list.add(str);
+				}
+				resultSet.add(list);
+			}
+		}catch (SQLException e){
+			if(resultSet.isEmpty()){
+				throw new DLException();
+			}else{
+				throw new DLException(e);
+			}
+		}	
+		this.printFormat(resultSet, metaData);
+		return resultSet;
+	}
+	
+	/**
 	 * Uses the prepare method and executes the query, printing the result set and
 	 * returning the result set as a 2-D ArrayList.
 	 * 
@@ -208,7 +262,6 @@ public class ConnectMySQLServer {
 				}
 				resultSet.add(list);
 			}
-			this.printFormat(resultSet, metaData);
 		}catch (DLException | SQLException e) {
 			
 		}
