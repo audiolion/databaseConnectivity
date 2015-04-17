@@ -1,0 +1,36 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 1.7
+version = '1.0'
+
+sourceSets {
+  main {
+      java {
+          srcDir 'src/main'
+      }
+  }
+}
+
+
+repositories {
+	mavenCentral()
+}
+
+configurations {
+	driver
+}
+
+dependencies {
+    driver group: 'mysql', name: 'mysql-connector-java', version: '5.0.8' 
+    driver group: 'com.microsoft.sqlserver', name: 'sqljdbc4', version: '4.0'
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+}
+
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'repos'
+       }
+    }
+}

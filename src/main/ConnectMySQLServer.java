@@ -1,4 +1,4 @@
-package dbconnect;
+package main;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class ConnectMySQLServer {
 	private String propsUSER = "";
 	private String propsPASS = "";
 	
-	private Hashtable<String, PreparedStatement> preparedStatements;
+	private Hashtable<String, PreparedStatement> preparedStatementsHash;
 	
 	/**
 	 * Ensures singleton access to database instance
@@ -77,7 +77,7 @@ public class ConnectMySQLServer {
 		propsUSER = prop.getProperty("user");
 		propsPASS = prop.getProperty("password");
 		
-		preparedStatements = new Hashtable<String, PreparedStatement>();
+		preparedStatementsHash = new Hashtable<String, PreparedStatement>();
 	}
 	
 	/**
@@ -175,7 +175,7 @@ public class ConnectMySQLServer {
 				throw new DLException(e);
 			}
 		}	
-		this.printFormat(resultSet, metaData);
+		
 		return resultSet;
 	}
 	
@@ -227,7 +227,7 @@ public class ConnectMySQLServer {
 				throw new DLException(e);
 			}
 		}	
-		this.printFormat(resultSet, metaData);
+		
 		return resultSet;
 	}
 	
@@ -304,28 +304,26 @@ public class ConnectMySQLServer {
 	 * @throws DLException
 	 */
 	public PreparedStatement prepare(String sql, ArrayList<String> parameters) throws DLException{
-		PreparedStatement stmt = preparedStatements.get(sql);
-		Boolean stmtExists = false;
-		if(stmt != null){
-			stmtExists = true;
-		}
+		PreparedStatement stmt = preparedStatementsHash.get(sql);
+		
 		try {
-			if(!stmtExists){
+			if(stmt == null){
 				stmt = conn.prepareStatement(sql);
 			}
 			for(int i = 0; i < parameters.size(); i++){
 				stmt.setString((i+1), parameters.get(i));
 			}
-			preparedStatements.put(sql, stmt);
+			preparedStatementsHash.put(sql, stmt);
 		} catch (SQLException e) {
 			throw new DLException(e);
 		}
-		
+				
 		return stmt;
 	}
 	
 	/**
-	 * Wrapper for executeUpdate and prepareStatement methods
+	 * Wrapper for executeUpdate and prepareStatement methods, returns -1 if there was
+	 * an exception
 	 * 
 	 * @param sql - the sql string to be prepared
 	 * @param parameters - the parameters to insert
@@ -376,7 +374,7 @@ public class ConnectMySQLServer {
 	 * @return metaData - Meta data of the result set, null if no db connection
 	 * @throws DLException 
 	 */
-	public ResultSetMetaData getMetaData(String sql) throws DLException{
+	protected ResultSetMetaData getMetaData(String sql) throws DLException{
 		if(conn == null){
 			return null;
 		}
@@ -439,7 +437,7 @@ public class ConnectMySQLServer {
 		} catch (SQLException e) {
 			throw new DLException(e);
 		}
-		
+		System.out.println();
 		for(ArrayList<String> array : resultSet){
     		for(String item : array){
     			 System.out.format("%-20s\t", item);

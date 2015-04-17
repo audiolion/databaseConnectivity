@@ -1,34 +1,42 @@
-package dbconnect;
+package main;
 
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 
 public class Equipment {
-	private String equipID = "";
-	private String equipName = "";
-	private String equipDesc = "";
-	private String equipCap = "";
+	private Integer equipID = null;
+	private String equipName = null;
+	private String equipDesc = null;
+	private Integer equipCap = null;
 	private ConnectMySQLServer dbInstance;
 	
 	public Equipment(){
 		dbInstance = ConnectMySQLServer.getInstance();
 	}
 	
-	public Equipment(String equipID){
+	public Equipment(Integer equipID){
 		this.equipID = equipID;
 		dbInstance = ConnectMySQLServer.getInstance();
 	}
 	
-	public Equipment(String equipID, String equipName, String equipDesc,
-						String equipCap){
-		this.equipCap = equipCap;
+	public Equipment(Integer equipID, String equipName, String equipDesc,
+						Integer equipCap){
+		this.equipID = equipID;
 		this.equipName = equipName;
-		this.equipID = equipID;
 		this.equipDesc = equipDesc;
+		this.equipCap = equipCap;
 		dbInstance = ConnectMySQLServer.getInstance();
 	}
 	
-	public ArrayList<String> getEquipID(){
+	private void printTable(){
+		String sql = "SELECT * from Equipment";
+		
+		try{
+			dbInstance.printFormat(dbInstance.getData(sql), dbInstance.getMetaData(sql));
+		}catch(DLException e){
+		}
+	}
+	
+	private ArrayList<String> getEquipID(){
 		String sql = "SELECT equipment.equipid FROM equipment";
 		ArrayList<ArrayList<String>> result;
 		ArrayList<String> equipID = new ArrayList<String>();
@@ -41,7 +49,7 @@ public class Equipment {
 		return equipID;
 	}
 	
-	public ArrayList<String> getEquipmentName(){
+	private ArrayList<String> getEquipmentName(){
 		String sql = "SELECT equipment.equipmentname FROM equipment";
 		ArrayList<ArrayList<String>> result;
 		ArrayList<String> equipmentName = new ArrayList<String>();
@@ -54,7 +62,7 @@ public class Equipment {
 		return equipmentName;
 	}
 	
-	public ArrayList<String> getEquipmentDescription(){
+	private ArrayList<String> getEquipmentDescription(){
 		String sql = "SELECT equipment.equipmentdescription FROM equipment";
 		ArrayList<ArrayList<String>> result;
 		ArrayList<String> equipDesc = new ArrayList<String>();
@@ -67,7 +75,7 @@ public class Equipment {
 		return equipDesc;
 	}
 	
-	public ArrayList<String> getEquipmentCapacity(){
+	private ArrayList<String> getEquipmentCapacity(){
 		String sql = "SELECT equipment.equipmentcapacity FROM equipment";
 		ArrayList<ArrayList<String>> result;
 		ArrayList<String> equipCap = new ArrayList<String>();
@@ -80,7 +88,7 @@ public class Equipment {
 		return equipCap;
 	}
 	
-	public boolean addEquipID(String equipID){
+	private boolean addEquipID(String equipID){
 		String sql = "INSERT INTO equipment (equipid) values (" + equipID + ")";
 		boolean result = false;
 		try {
@@ -90,7 +98,7 @@ public class Equipment {
 		return result;
 	}
 	
-	public boolean addEquipmentName(String equipName){
+	private boolean addEquipmentName(String equipName){
 		String sql = "INSERT INTO equipment (equipmentname) values (" + equipName + ")";
 		boolean result = false;
 		try {
@@ -100,7 +108,7 @@ public class Equipment {
 		return result;
 	}
 	
-	public boolean addEquipmentDescription(String equipDesc){
+	private boolean addEquipmentDescription(String equipDesc){
 		String sql = "INSERT INTO equipment (equipmentdescription) values (" + equipDesc + ")";
 		boolean result = false;
 		try {
@@ -110,7 +118,7 @@ public class Equipment {
 		return result;
 	}
 	
-	public boolean addEquipmentCapacity(String equipCap){
+	private boolean addEquipmentCapacity(String equipCap){
 		String sql = "INSERT INTO equipment (equipmentcapacity) values (" + equipCap + ")";
 		boolean result = false;
 		try {
@@ -122,66 +130,115 @@ public class Equipment {
 	}
 	
 	public ArrayList<String> fetch(){
-		String sql = "SELECT * FROM equipment WHERE equipid = ?";
+		String sql = "SELECT * FROM Equipment WHERE EquipID = ?";
 		ArrayList<String> parameters = new ArrayList<String>();
-		parameters.add(equipID);
-		ArrayList<ArrayList<String>> results;
-		ArrayList<String> equipID = new ArrayList<String>();
-		results = dbInstance.getData(sql, parameters);
-		equipID = results.get(0);
+		if(equipID == null){
+			parameters.add("");
+		}else{
+			parameters.add(equipID+"");
+		}
+		ArrayList<ArrayList<String>> results = dbInstance.getData(sql, parameters);
 		
-		return equipID;
+		return results.get(0);
 	}
 	
-	public boolean put(String update, String fieldMatch){
-		String sql = "UPDATE equipment SET EquipmentName = ? where equipID = ?";
+	public boolean put(){
+		String sql = "INSERT INTO Equipment (EquipID,EquipmentName,EquipmentDescription,EquipmentCapacity) VALUES (?,?,?,?)";
 		ArrayList<String> parameters = new ArrayList<String>();
-		parameters.add(update);
-		parameters.add(fieldMatch);
-		boolean result = false;
-		result = dbInstance.setData(sql, parameters);
+		if(equipID == null){
+			parameters.add("");
+		}else{
+			parameters.add(equipID+"");
+		}
+		
+		if(equipName == null){
+			parameters.add("");
+		}else{
+			parameters.add(equipName);
+		}
+		
+		if(equipDesc == null){
+			parameters.add("");
+		}else{
+			parameters.add(equipDesc);
+		}
+		
+		if(equipCap == null){
+			parameters.add("0");
+		}else{
+			parameters.add(equipCap+"");
+		}
+		
+		boolean result = dbInstance.setData(sql, parameters);
 		
 		return result;
 	}
 	
-	public boolean post(String attribute, String post){
-		String sql = "INSERT INTO Equipment (?) VALUES (?)";
+	public boolean post(){
+		String sql = "UPDATE Equipment SET EquipmentName = ?,EquipmentDescription = ?,EquipmentCapacity = ? WHERE EquipID = ?";
 		ArrayList<String> parameters = new ArrayList<String>();
-		parameters.add(attribute);
-		parameters.add(post);
-		boolean result = false;
-		result = dbInstance.setData(sql, parameters);
+		parameters.add(equipName);
+		parameters.add(equipDesc);
+		parameters.add(equipCap+"");
+		parameters.add(equipID+"");
+				
+		boolean result = dbInstance.setData(sql, parameters);
 		
 		return result;
 	}
 	
-	public boolean delete(String delete){
-		String sql = "DELETE FROM Equipment WHERE equipid = ?";
+	public boolean delete(){
+		String sql = "DELETE FROM Equipment WHERE EquipID = ?";
 		ArrayList<String> parameters = new ArrayList<String>();
-		parameters.add(delete);
-		boolean result = false;
-		result = dbInstance.setData(sql, parameters);
+		if(equipID == null){
+			return false;
+		}else{
+			parameters.add(equipID+"");
+		}
+		boolean result = dbInstance.setData(sql, parameters);
 		return result;
 	}
+	
+	private void setEquipID(Integer value){
+		this.equipID = value;
+	}
+	
+	private void setEquipName(String value){
+		this.equipName = value;
+	}
+	
+	private void setEquipDesc(String value){
+		this.equipDesc = value;
+	}
+	
+	private void setEquipCap(Integer value){
+		this.equipCap = value;
+	}
+	
 	
 	public static void main(String[] args){
-		Equipment eq = new Equipment("568");
+		Equipment eq = new Equipment(3644);
 		boolean result = false;
 		try {
 			result = eq.dbInstance.defaultConnect();
 		} catch (DLException e) {
 		}
 		if(result){
+			eq.printTable();
 			ArrayList<String> res = eq.fetch();
-			for(String line : res){
-				System.out.print(line+"\t");
-			}
-			eq.put("Clearly Class", "568");
+			eq.setEquipName("Hi Ravi :)");
+			eq.setEquipDesc(res.get(2));
+			eq.setEquipCap(Integer.parseInt(res.get(3)));
+			eq.post();
+			System.out.println();
 			res = eq.fetch();
-			System.out.print("\n");
-			for(String line : res){
-				System.out.print(line+"\t");
+			for(String value : res){
+				System.out.print(value + " ");
 			}
+			
+			System.out.println();
+			
+			eq.printTable();
 		}
 	}
 }
